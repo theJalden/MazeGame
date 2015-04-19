@@ -5,108 +5,48 @@
 import java.awt.Color;
 import java.util.ArrayList;
 
-import tester.*;
 import javalib.impworld.*;
 import javalib.colors.*;
 import javalib.worldimages.*;
 
 
 
-class Edge {
-    ACell from;
-    ACell to;
-    double weight;
-    
-    Edge(ACell from, ACell to) {
-        this.from = from;
-        this.to = to;
-        
-        this.weight = 1.0;
-    }
-    
-    Edge(ACell from, ACell to, double weight) {
-        this.from = from;
-        this.to = to;
-        this.weight = weight;
-    }
-    
-    void changeWeight(double factor) {
-        this.weight = this.weight * factor;
-    }
-}
 
-abstract class ACell {    
-    
-    Edge top;
-    Edge left;
-    Edge bottom;
-    Edge right;
-    
-    /* maybe parameters
-    boolean current;
-    boolean visited;
-    boolean active;
-    */
-    
-    Color color;
-    
-    ACell() {
-        this.top = null;
-        this.left = null;
-        this.bottom = null;
-        this.right = null;
-    }
-    
-    ACell(ACell top, ACell left, ACell bottom, ACell right, Color color) {
-        this.top = new Edge(this, top);
-        this.left = new Edge(this, left);
-        this.bottom = new Edge(this, bottom);
-        this.right = new Edge(this, right);
-        
-        this.color = color;
-    }
-    
-    
-    /*
-    WorldImage drawCell(Posn pos) {
-        return new RectangleImage(pos, MazeGame.)
-    }
-    */
-    
-}
-
-// For cells on the edges to connect to
-class NullCell extends ACell{
-    ;
-}
-
-
-class Cell extends ACell {
-    
-}
 
 
 class MazeGame extends World {
-    static final int WINDOW_WIDTH = 500;
-    static final int WINDOW_HEIGHT = 300;
+    static final int W_WIDTH = 1000;
+    static final int W_HEIGHT = 600;
     
-    static final int BOARD_WIDTH_SMALL = 10;
-    static final int BOARD_WIDTH_MEDIUM = 25;
-    static final int BOARD_WIDTH_LARGE = 100;
+    static final int B_WIDTH_SMALL = 10;
+    static final int B_WIDTH_MEDIUM = 25;
+    static final int B_WIDTH_LARGE = 100;
     
-    static final int BOARD_HEIGHT_SMALL = 6;
-    static final int BOARD_HEIGHT_MEDIUM = 15;
-    static final int BOARD_HEIGHT_LARGE = 60;
+    static final int B_HEIGHT_SMALL = 6;
+    static final int B_HEIGHT_MEDIUM = 15;
+    static final int B_HEIGHT_LARGE = 60;
     
-    static final int CELL_SIZE_SMALL = WINDOW_WIDTH / BOARD_HEIGHT_SMALL;
-    static final int CELL_SIZE_MEDIUM = WINDOW_WIDTH / BOARD_HEIGHT_MEDIUM;
-    static final int CELL_SIZE_LARGE = WINDOW_WIDTH / BOARD_HEIGHT_LARGE;
+    static final int CELL_SIZE_SMALL = W_WIDTH / B_HEIGHT_SMALL;
+    static final int CELL_SIZE_MEDIUM = W_WIDTH / B_HEIGHT_MEDIUM;
+    static final int CELL_SIZE_LARGE = W_WIDTH / B_HEIGHT_LARGE;
+    
+    static final WorldImage BG = new RectangleImage(
+            new Posn(W_WIDTH/2, (100 + W_HEIGHT)/2), 
+            W_WIDTH, (100 + W_HEIGHT),
+            new Black()).overlayImages(
+                    new RectangleImage(new Posn(W_WIDTH/2, W_HEIGHT/2), 
+                                       W_WIDTH, W_HEIGHT,
+                                       new White()));
+    
     
     
     ArrayList<ArrayList<Cell>> cellss;
+    ArrayList<Edge> maze;
     
     MazeGame() {
         this.cellss = this.initCellss(1);
+        this.maze = this.initMaze();
+        
     }
     
     ArrayList<ArrayList<Cell>> initCellss(int type) {
@@ -116,16 +56,16 @@ class MazeGame extends World {
         int width, height;
         
         if (type == 1) {
-            width = MazeGame.BOARD_WIDTH_SMALL;
-            height = MazeGame.BOARD_HEIGHT_SMALL;
+            width = MazeGame.B_WIDTH_SMALL;
+            height = MazeGame.B_HEIGHT_SMALL;
         }
         else if (type == 2) {
-            width = MazeGame.BOARD_WIDTH_MEDIUM;
-            height = MazeGame.BOARD_HEIGHT_MEDIUM;
+            width = MazeGame.B_WIDTH_MEDIUM;
+            height = MazeGame.B_HEIGHT_MEDIUM;
         }
         else if (type == 3) {
-            width = MazeGame.BOARD_WIDTH_LARGE;
-            height = MazeGame.BOARD_HEIGHT_MEDIUM;
+            width = MazeGame.B_WIDTH_LARGE;
+            height = MazeGame.B_HEIGHT_MEDIUM;
         }
         else { throw new IllegalArgumentException("type needs to be 1, 2, or 3; you gave:  " + Integer.toString(type));}
         
@@ -143,48 +83,101 @@ class MazeGame extends World {
             ArrayList<Cell> temp = new ArrayList<Cell>();
             
             for (int j = 0; j < height; j += 1) {
-                temp.add(new Cell(  /*whatever will go here*/
-                        ));
+                temp.add(new Cell());
             }
-        }
-        
-        ArrayList<Edge> edges = new ArrayList<Edge>();
-        
-        boolean onTop, onLeft, onRight, onBottom;
-        for (int i = 0; i < width; i += 1) {
             
-            if (i == 0) {onLeft = true;}
-            else {onLeft = false;}
-            
-            if (i == width - 1) {onRight = true;}
-            else {onRight = false;}
-            
-            for (int j = 0; j < height; j += 1) {
-                if (j == 0) {onTop = true;}
-                else {onTop = false;}
-                
-                if (j == height - 1) {onBottom = true;}
-                else {onBottom = false;}
-                
-                if (!onLeft) {
-                    edges.add(new Edge(ret.get(i).get(j), ret.get(i+1).get(j)));
-                }
-                
-                if (!onBottom) {
-                    edges.add(new Edge(ret.get(i).get(j), ret.get(i).get(j+1)));
-                }
-            }
+            ret.add(temp);
         }
         
      
-        return null;
+        return ret;
         
     }
+    
+    
+    ArrayList<Edge> initMaze() {
+        ArrayList<Edge> edges = new ArrayList<Edge>();
 
-    @Override
+        boolean onRight, onBottom;
+
+        // adds a new edge for every node to the right and bottom
+        // execpt for the rightmost nodes and the bottom most nodes
+
+        // i represents the col of the arraylist of cells
+        
+        int width, height;
+        
+        width = this.cellss.size();
+        height = this.cellss.get(0).size();
+        
+        for (int i = 0; i < width; i += 1) {
+
+            if (i >= width - 1) {onRight = true;}
+            else {onRight = false;}
+
+            // j represents the position within the ith col
+            for (int j = 0; j < height; j += 1) {
+
+                if (j >= height - 1) {onBottom = true;}
+                else {onBottom = false;}
+
+                if (!onRight) {
+                    edges.add(new Edge((this.cellss.get(i)).get(j), (this.cellss.get(i+1)).get(j)));
+                }
+
+                if (!onBottom) {
+                    edges.add(new Edge(this.cellss.get(i).get(j), this.cellss.get(i).get(j+1)));
+                }
+            }
+        }
+
+
+        // randomize edges
+        for (Edge edge: edges) {
+            edge.changeWeight(Math.random());
+        }
+
+        // sort edges
+        edges = this.sortEdges(edges);
+
+        return edges;
+    }
+    
+    // Quick sort algorithm, could be made more efficient
+    ArrayList<Edge> sortEdges(ArrayList<Edge> edges) {
+        
+        ArrayList<Edge> lower = new ArrayList<Edge>();
+        ArrayList<Edge> higher = new ArrayList<Edge>();
+        
+        // base case
+        if (edges.size() <= 1) {return edges;}
+        
+        Edge pivot = edges.get(0);
+        
+        for (Edge e: edges) {
+            if (e.weight < pivot.weight) {
+                lower.add(e);
+            }
+            else if (e.weight > pivot.weight){
+                higher.add(e);
+            }
+        }
+        
+        
+        lower = this.sortEdges(lower);
+        higher = this.sortEdges(higher);
+        
+        lower.add(pivot);
+        lower.addAll(higher);
+        
+        return lower;
+        
+        
+    }
+    
+
     public WorldImage makeImage() {
-        // TODO Auto-generated method stub
-        return null;
+        return BG;
     }
     
     
