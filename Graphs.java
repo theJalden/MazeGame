@@ -1,5 +1,9 @@
 import java.awt.Color;
 
+import javalib.colors.*;
+import javalib.worldimages.Posn;
+
+
 class Edge {
     ACell from;
     ACell to;
@@ -25,10 +29,14 @@ class Edge {
 
 abstract class ACell {    
     
+    Posn position;
+    // I don't think we need these
+    /*
     Edge top;
     Edge left;
     Edge bottom;
     Edge right;
+    */
     
     /* maybe parameters
     boolean current;
@@ -36,22 +44,34 @@ abstract class ACell {
     boolean active;
     */
     
-    Color color;
+    IColor color;
     
     ACell() {
+        /*
         this.top = null;
         this.left = null;
         this.bottom = null;
         this.right = null;
+        */
+        this.position = null;
+        this.color = new White();
     }
     
-    ACell(ACell top, ACell left, ACell bottom, ACell right, Color color) {
+    ACell(Posn pos, IColor color) {
+        /*
         this.top = new Edge(this, top);
         this.left = new Edge(this, left);
         this.bottom = new Edge(this, bottom);
         this.right = new Edge(this, right);
+        */
         
+        this.position = pos;
         this.color = color;
+    }
+    
+    ACell(int col, int row) {
+        this.position = new Posn(col, row);
+        this.color = new White();
     }
     
     
@@ -83,5 +103,9 @@ class NullCell extends ACell{
 class Cell extends ACell {
     Cell() {
         super();
+    }
+    
+    Cell(int x, int y) {
+        super(x, y);
     }
 }

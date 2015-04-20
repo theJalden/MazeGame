@@ -12,7 +12,60 @@ import javalib.worldimages.*;
 
 
 
-
+class MazeBuildAux {
+    ArrayList<Cell> nodesDict;
+    
+    MazeBuildAux(ArrayList<ArrayList<Cell>> celss) {
+        // zero out Array
+        for (ArrayList<Cell> col: celss) {
+            for (Cell row: col) {
+                // fill the array 3x to reduce chance of collision
+                for (int i = 0; i < 3; i += 1){
+                    nodesDict.add(null);
+                }
+            }
+        }
+        
+        // add values
+        for (ArrayList<Cell> col: celss) {
+            for (Cell cell: col) {
+                nodesDict.set(cell.hashCode(), cell);
+            }
+        }
+        
+    }
+    
+    int size(){
+        return this.nodesDict.size();
+    }
+    
+    Cell follow(Cell key) {
+        Cell curVal = key;
+        Cell lastVal = null;
+        // worry about infinite loop
+        // haven't proved termination
+        while (!(curVal.equals(lastVal))) {
+            lastVal = curVal;
+            curVal = this.nodesDict.get(curVal.hashCode());
+        }
+        
+        return curVal;
+        
+    }
+    
+    // assumes the given cells are represented in the table
+    boolean sameBlob(Cell c1, Cell c2) {
+        Cell blob1 = this.follow(c1);
+        Cell blob2 = this.follow(c2);
+        
+        return blob1.equals(blob2);
+    }
+    
+    
+    
+    
+    
+}
 
 class MazeGame extends World {
     static final int W_WIDTH = 1000;
@@ -42,6 +95,8 @@ class MazeGame extends World {
     
     ArrayList<ArrayList<Cell>> cellss;
     ArrayList<Edge> maze;
+    
+    //Dictionary<Integer, Cell> mazeBuilderAux = new Dictionary<Integer, Cell>();
     
     MazeGame() {
         this.cellss = this.initCellss(1);
@@ -83,7 +138,7 @@ class MazeGame extends World {
             ArrayList<Cell> temp = new ArrayList<Cell>();
             
             for (int j = 0; j < height; j += 1) {
-                temp.add(new Cell());
+                temp.add(new Cell(i, j));
             }
             
             ret.add(temp);
@@ -139,8 +194,28 @@ class MazeGame extends World {
 
         // sort edges
         edges = this.sortEdges(edges);
+        
+        // At this point we start building the actual maze;
+        ArrayList<Edge> maze = new ArrayList<Edge>();
+        
+        // A tree will have n-1 edges, where n is the number of cells = width * height
+        int n = width * height;
+        int i = 0;  // index for moving through Edges
+        Edge cur;
+        while (maze.size() < n - 1) {
+            if (i < edges.size()){
 
-        return edges;
+                cur = edges.get(i);
+                // TODO
+                // if it doesn't create a cycle
+                maze.add(cur);
+                i++;
+            }
+            else {throw new RuntimeException("Your index for edges is out of bounds");}
+        }
+        
+
+        return maze;
     }
     
     // Quick sort algorithm, could be made more efficient
